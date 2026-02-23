@@ -1,37 +1,25 @@
-import asyncio
+from aiohttp import web
+import os
 
-CURRENT_VERSION = "0.1"  #Используем строку для корректного сравнения
+CURRENT_VERSION = "0.1"
 
-async def handle_client(reader, writer):
-    addr = writer.get_extra_info('peername')
-    print(f"Подключен: {addr}")
-
-    try:
-        data = await reader.read(1024)
-        version = data.decode().strip()
-
-        if version != CURRENT_VERSION:
-            writer.write(b"update")
-        else:
-            writer.write(b"ok")
+async def check_version(request):
+    # Получаем параметр 'v' из URL: /check_version?v=0.1
+    user_version = request.query.get('v')
+    
+    if not user_version:
+        return web.Response(text="error: missing version", status=400)
         
-        await writer.drain() #Ждем отправки данных
-    finally:
-        writer.close()
-        await writer.wait_closed()
+    if user_version == CURRENT_VERSION:
+        return web.Response(text="ok")
+    else:
+        return web.Response(text="update")
 
-async def main():
-    #Запускаем сервер на всех интерфейсах (0.0.0.0) или конкретном IP
-    server = await asyncio.start_server(handle_client, '192.168.100.3', 8080)
-
-    addr = server.sockets[0].getsockname()
-    print(f'Сервер запущен на {addr}')
-
-    async with server:
-        await server.serve_forever()
+# Создаем приложение
+app = web.Application()
+app.add_routes([web.get('/check_version', check_version)])
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        pass
+    # Для локального запуска на Arch
+    port = int(os.environ.get("PORT", 8080))
+    web.run_app(app, host='0.0.0.0', port=port)
