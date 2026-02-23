@@ -1,10 +1,13 @@
-from aiohttp import web
+from flask import Flask, request
+import os
 
-async def check_version(request):
-    v = request.query.get('v')
-    return web.Response(text="ok" if v == "0.1" else "update")
+app = Flask(__name__)
 
-# Создаем объект приложения
-app = web.Application()
-app.add_routes([web.get('/check_version', check_version)])
-# Все. Больше никакого кода внизу для Render не нужно.
+@app.route('/check_version')
+def check_version():
+    v = request.args.get('v')
+    return "ok" if v == "0.1" else "update"
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
