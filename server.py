@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route('/check_version')
 def check_version():
     v = request.args.get('v')
-    return "ok" if v == "0.1" else "update"
+    return "true" if v == "0.1" else "false"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
